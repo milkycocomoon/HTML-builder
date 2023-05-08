@@ -13,7 +13,10 @@ copyAssets(folderFonts, folderFontsCopy);
 copyAssets(folderImg, folderImgCopy);
 copyAssets(folderSvg, folderSvgCopy);
 
+const fsPromises = fs.promises;
 const folderComponents = path.join(__dirname, 'components');
+const template = path.join(__dirname, 'template.html');
+const index = path.join(__dirname, 'project-dist', 'index.html');
 
 fs.mkdir(folderProject, { recursive: true }, (error) => {
     if (error) throw error;
@@ -96,13 +99,23 @@ function copyAssets(folder, folderCopy) {
     })
 }
 
-// idk how to make this part with template...
+createHtml();
+async function createHtml() {
+    let data = await fsPromises.readFile(template, 'utf-8');
+    const files = await fsPromises.readdir(folderComponents);
 
-// fs.mkdir(folderProject, { recursive: true }, (error) => {
-//     if (error) throw error;
-//     fs.writeFile(path.join(folderComponents, 'index.html'), '', (error) => {
-//         if (error) throw error;
-//     });
-// });
+    for (let i = 0; i < files.length; i++) {
+        const file = path.join(folderComponents, files[i]);
+        if (path.parse(file).ext === '.html') {
+            const fileName = path.parse(file).name;
+            const fileData = await fsPromises.readFile(file, 'utf-8');
+            data = data.replace(`{{${fileName}}}`, fileData);
+
+            fs.writeFile(index, data, (error) => {
+                if (error) throw error;
+            })
+        }
+    }
+}
 
 // node 06-build-page
